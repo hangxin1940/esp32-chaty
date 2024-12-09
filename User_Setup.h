@@ -42,7 +42,7 @@
 //#define RPI_DISPLAY_TYPE // 20MHz maximum SPI
 
 // Only define one driver, the other ones must be commented out
-//#define ILI9341_DRIVER       // Generic driver for common displays
+// #define ILI9341_DRIVER       // Generic driver for common displays
 //#define ILI9341_2_DRIVER     // Alternative ILI9341 driver, see https://github.com/Bodmer/TFT_eSPI/issues/1172
 #define ST7735_DRIVER      // Define additional parameters below for this display
 //#define ILI9163_DRIVER     // Define additional parameters below for this display
@@ -73,27 +73,31 @@
 // For ST7735, ST7789 and ILI9341 ONLY, define the colour order IF the blue and red are swapped on your display
 // Try ONE option at a time to find the correct colour order for your display
 
-#define TFT_RGB_ORDER TFT_RGB  // Colour order Red-Green-Blue
+ #define TFT_RGB_ORDER TFT_RGB  // Colour order Red-Green-Blue
 //  #define TFT_RGB_ORDER TFT_BGR  // Colour order Blue-Green-Red
 
 // For M5Stack ESP32 module with integrated ILI9341 display ONLY, remove // in line below
 
 // #define M5STACK
-
 // 屏幕引脚定义
-#define TFT_CS   10    
-#define TFT_RST  15
-#define TFT_DC   16
-#define TFT_MOSI 11
-#define TFT_SCLK 12
+#define TFT_CS   16
+#define TFT_RST  20
+#define TFT_DC   8
+#define TFT_MOSI 18
+#define TFT_SCLK 17
 
+// #define TFT_CS   15
+// #define TFT_RST  8
+// #define TFT_DC   18
+// #define TFT_MOSI 16
+// #define TFT_SCLK 17
 // For ST7789, ST7735, ILI9163 and GC9A01 ONLY, define the pixel width and height in portrait orientation
 // #define TFT_WIDTH  80
-// #define TFT_WIDTH  128
+#define TFT_WIDTH  128
 // #define TFT_WIDTH  172 // ST7789 172 x 320
 // #define TFT_WIDTH  170 // ST7789 170 x 320
 // #define TFT_WIDTH  240 // ST7789 240 x 240 and 240 x 320
-// #define TFT_HEIGHT 160
+#define TFT_HEIGHT 160
 // #define TFT_HEIGHT 128
 // #define TFT_HEIGHT 240 // ST7789 240 x 240
 // #define TFT_HEIGHT 320 // ST7789 240 x 320
@@ -107,7 +111,7 @@
 // this User_Setup file, then rebuild and upload the sketch to the board again:
 
 // #define ST7735_INITB
-// #define ST7735_GREENTAB
+#define ST7735_GREENTAB
 // #define ST7735_GREENTAB2
 // #define ST7735_GREENTAB3
 // #define ST7735_GREENTAB128    // For 128 x 128 display
@@ -121,7 +125,7 @@
 // 2 lines try both options, one of the options should correct the inversion.
 
 // #define TFT_INVERSION_ON
-#define TFT_INVERSION_OFF
+// #define TFT_INVERSION_OFF
 
 
 // ##################################################################################
@@ -174,13 +178,13 @@
 // ###### EDIT THE PIN NUMBERS IN THE LINES FOLLOWING TO SUIT YOUR ESP8266 SETUP ######
 
 // For NodeMCU - use pin numbers in the form PIN_Dx where Dx is the NodeMCU pin designation
-//#define TFT_MISO  PIN_D6  // Automatically assigned with ESP8266 if not defined这里
-//#define TFT_MOSI  PIN_D7  // Automatically assigned with ESP8266 if not defined
-//#define TFT_SCLK  PIN_D5  // Automatically assigned with ESP8266 if not defined
+// #define TFT_MISO  PIN_D6  // Automatically assigned with ESP8266 if not defined
+// #define TFT_MOSI  PIN_D7  // Automatically assigned with ESP8266 if not defined
+// #define TFT_SCLK  PIN_D5  // Automatically assigned with ESP8266 if not defined
 
-//#define TFT_CS    PIN_D8  // Chip select control pin D8
-//#define TFT_DC    PIN_D3  // Data Command control pin
-//#define TFT_RST   PIN_D4  // Reset pin (could connect to NodeMCU RST, see next line)
+// #define TFT_CS    PIN_D8  // Chip select control pin D8
+// #define TFT_DC    PIN_D3  // Data Command control pin
+// #define TFT_RST   PIN_D4  // Reset pin (could connect to NodeMCU RST, see next line)
 //#define TFT_RST  -1     // Set TFT_RST to -1 if the display RESET is connected to NodeMCU RST or 3.3V
 
 
