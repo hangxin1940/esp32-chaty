@@ -8,7 +8,7 @@
 #include <ArduinoJson.h>
 
 // 16位，单声道，16000Hz，线性PCM
-class Audio1
+class Mic
 {
   I2S *i2s;
   static const int headerSize = 44;
@@ -41,8 +41,8 @@ public:
   char **wavData;                          // 分段存储。因为在ESP32中无法分配大块连续内存区域。
   byte paddedHeader[headerSize + 4] = {0}; // 大小必须是3的倍数以便进行Base64编码。额外的字节大小必须是偶数，因为音频数据是16位的。
 
-  Audio1();
-  ~Audio1();
+  Mic();
+  ~Mic();
   void Record();
   void clear();
   void init();

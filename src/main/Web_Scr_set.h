@@ -6,8 +6,8 @@
 #include "WiFi.h"
 #include <WiFiClientSecure.h>
 #include "HTTPClient.h"
-#include "Audio1.h"
-#include "Audio2.h"
+#include "Mic.h"
+#include "Audio.h"
 #include <ArduinoJson.h>
 #include <ArduinoWebsockets.h>
 #include <Wire.h>

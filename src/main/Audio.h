@@ -115,14 +115,14 @@ protected:
 };
 //----------------------------------------------------------------------------------------------------------------------
 
-class Audio2 : private AudioBuffer
+class Audio : private AudioBuffer
 {
 
     AudioBuffer InBuff; // instance of input buffer
 
 public:
-    Audio2(bool internalDAC = false, uint8_t channelEnabled = 3, uint8_t i2sPort = I2S_NUM_0); // #99
-    ~Audio2();
+    Audio(bool internalDAC = false, uint8_t channelEnabled = 3, uint8_t i2sPort = I2S_NUM_0); // #99
+    ~Audio();
     void setBufsize(int rambuf_sz, int psrambuf_sz);
     bool connecttohost(const char *host, const char *user = "", const char *pwd = "");
     bool connecttospeech(const char *speech, const char *lang);

@@ -1,6 +1,5 @@
 #include "Web_Scr_set.h"
 #include "tiger_1.h"
-#include "muye.h"
 // 定义引脚
 // #define key 0       //boot按键引脚
 // #define led 10       //板载led引脚
@@ -114,8 +113,8 @@ WebsocketsClient webSocketClient;  // 与llm通信
 WebsocketsClient webSocketClient1; // 与stt通信
 
 // 创建音频对象
-Audio1 audio1;
-Audio2 audio2(false, 3, I2S_NUM_1);
+Mic mic;
+Audio audio(false, 3, I2S_NUM_1);
 // 参数: 是否使用内部DAC（数模转换器）如果设置为true，将使用ESP32的内部DAC进行音频输出。否则，将使用外部I2S设备。
 // 指定启用的音频通道。可以设置为1（只启用左声道）或2（只启用右声道）或3（启用左右声道）
 // 指定使用哪个I2S端口。ESP32有两个I2S端口，I2S_NUM_0和I2S_NUM_1。可以根据需要选择不同的I2S端口。
@@ -142,11 +141,11 @@ void chatgpt();
 void voicePlay()
 {
     // 检查音频是否正在播放以及回答内容是否为空
-    if ((audio2.isplaying == 0) && (Answer != "" || subindex < subAnswers.size()))
+    if ((audio.isplaying == 0) && (Answer != "" || subindex < subAnswers.size()))
     {
         if (subindex < subAnswers.size())
         {
-            audio2.connecttospeech(subAnswers[subindex].c_str(), "zh");
+            audio.connecttospeech(subAnswers[subindex].c_str(), "zh");
             // 在屏幕上显示文字
             if (text_temp != "" && flag == 1)
             {
@@ -167,7 +166,7 @@ void voicePlay()
         }
         else
         {
-            audio2.connecttospeech(Answer.c_str(), "zh");
+            audio.connecttospeech(Answer.c_str(), "zh");
             // 在屏幕上显示文字
             if (text_temp != "" && flag == 1)
             {
@@ -190,7 +189,7 @@ void voicePlay()
         // 设置开始播放标志
         startPlay = true;
     }
-    else if (audio2.isplaying == 0 && musicplay == 1) // 处理连续播放音乐逻辑
+    else if (audio.isplaying == 0 && musicplay == 1) // 处理连续播放音乐逻辑
     {
         preferences.begin("music_store", true);
         int numMusic = preferences.getInt("numMusic", 0);
@@ -203,7 +202,7 @@ void voicePlay()
 
         String audioStreamURL = "https://music.163.com/song/media/outer/url?id=" + musicID + ".mp3";
         Serial.println(audioStreamURL.c_str());
-        audio2.connecttohost(audioStreamURL.c_str());
+        audio.connecttohost(audioStreamURL.c_str());
 
         tft.fillRect(0, cursorY, width, 50, TFT_WHITE);
         askquestion = "正在顺序播放所有音乐，当前正在播放：" + musicName;
@@ -250,7 +249,7 @@ void imageshow()
             tft.pushImage(0, 0, width, height, bizhi[i]); // 用于壁纸显示的代码
             for (int j = 0; j < 100; j++)                 // 每隔一秒显示一张，同时保证显示壁纸时可以正常播放语音
             {
-                audio2.loop();
+                audio.loop();
                 delay(10);
             }
         }
@@ -299,13 +298,13 @@ void setup()
     u8g2.setForegroundColor(0x7E7B);        // 设置字体颜色为黑色
     // 显示文字
     u8g2.setCursor(0, 11);
-    u8g2.print("已开机！");
+    u8g2.print("CHAT-Y !!!");
 
-    // 初始化音频模块audio1
-    audio1.init();
+    // 初始化音频模块mic
+    mic.init();
     // 设置音频输出引脚和音量
-    audio2.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
-    audio2.setVolume(volume);
+    audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
+    audio.setVolume(volume);
 
     // 初始化Preferences
     preferences.begin("wifi_store");
@@ -351,16 +350,16 @@ void loop()
         voicePlay(); // 调用voicePlay函数播放后续的语音
 
     // 音频处理循环
-    audio2.loop();
+    audio.loop();
 
     // 如果音频正在播放
-    if (audio2.isplaying == 1)
+    if (audio.isplaying == 1)
         digitalWrite(led, HIGH); // 点亮板载LED指示灯
     else
         digitalWrite(led, LOW); // 熄灭板载LED指示灯
 
     // 唤醒词识别
-    if (audio2.isplaying == 0 && awake_flag == 0 && await_flag == 1)
+    if (audio.isplaying == 0 && awake_flag == 0 && await_flag == 1)
     {
         awake_flag = 1;
         StartConversation();
@@ -376,7 +375,7 @@ void loop()
         StartConversation();
     }
     // 连续对话
-    if (audio2.isplaying == 0 && Answer == "" && subindex == subAnswers.size() && musicplay == 0 && conflag == 1 && image_show == 0)
+    if (audio.isplaying == 0 && Answer == "" && subindex == subAnswers.size() && musicplay == 0 && conflag == 1 && image_show == 0)
     {
         loopcount++;
         Serial.print("loopcount：");
@@ -384,7 +383,7 @@ void loop()
         StartConversation();
     }
 
-    if (audio2.isplaying == 1 && image_show == 1)
+    if (audio.isplaying == 1 && image_show == 1)
     {
         imageshow();
     }
@@ -670,7 +669,7 @@ DynamicJsonDocument gen_params_http(const char *model, const char *role_set)
 void processResponse(int status)
 {
     // 如果Answer的长度超过180且音频没有播放
-    if (Answer.length() >= 180 && (audio2.isplaying == 0) && flag == 0)
+    if (Answer.length() >= 180 && (audio.isplaying == 0) && flag == 0)
     {
         if (Answer.length() >= 300)
         {
@@ -700,7 +699,7 @@ void processResponse(int status)
                 Serial.println(subAnswer1);
 
                 // 将提取的句子转换为语音
-                audio2.connecttospeech(subAnswer1.c_str(), "zh");
+                audio.connecttospeech(subAnswer1.c_str(), "zh");
 
                 // 获取最终转换的文本
                 getText("assistant", subAnswer1);
@@ -728,7 +727,7 @@ void processResponse(int status)
                 String subAnswer1 = Answer.substring(0, lastCommaIndex + 3);
                 Serial.print("subAnswer1:");
                 Serial.println(subAnswer1);
-                audio2.connecttospeech(subAnswer1.c_str(), "zh");
+                audio.connecttospeech(subAnswer1.c_str(), "zh");
                 getText("assistant", subAnswer1);
                 tft.setCursor(54, 152);
                 tft.print(loopcount);
@@ -742,7 +741,7 @@ void processResponse(int status)
                 String subAnswer1 = Answer.substring(0, Answer.length());
                 Serial.print("subAnswer1:");
                 Serial.println(subAnswer1);
-                audio2.connecttospeech(subAnswer1.c_str(), "zh");
+                audio.connecttospeech(subAnswer1.c_str(), "zh");
                 getText("assistant", subAnswer1);
                 tft.setCursor(54, 152);
                 tft.print(loopcount);
@@ -822,7 +821,7 @@ void processResponse(int status)
     if (status == 2 && flag == 0)
     {
         // 播放最终转换的文本
-        audio2.connecttospeech(Answer.c_str(), "zh");
+        audio.connecttospeech(Answer.c_str(), "zh");
         // 显示最终转换的文本
         getText("assistant", Answer);
         tft.setCursor(54, 152);
@@ -961,7 +960,7 @@ void VolumeSet()
     else if (numberStr.length() > 0)
     {
         volume = numberStr.toInt();
-        audio2.setVolume(volume);
+        audio.setVolume(volume);
         Serial.print("音量已调到: ");
         Serial.println(volume);
         // 在屏幕上显示音量
@@ -973,7 +972,7 @@ void VolumeSet()
     else if (askquestion.indexOf("最") > -1 && (askquestion.indexOf("高") > -1 || askquestion.indexOf("大") > -1))
     {
         volume = 100;
-        audio2.setVolume(volume);
+        audio.setVolume(volume);
         Serial.print("音量已调到: ");
         Serial.println(volume);
         // 在屏幕上显示音量
@@ -989,7 +988,7 @@ void VolumeSet()
         {
             volume = 100;
         }
-        audio2.setVolume(volume);
+        audio.setVolume(volume);
         Serial.print("音量已调到: ");
         Serial.println(volume);
         // 在屏幕上显示音量
@@ -1001,7 +1000,7 @@ void VolumeSet()
     else if (askquestion.indexOf("最") > -1 && (askquestion.indexOf("低") > -1 || askquestion.indexOf("小") > -1))
     {
         volume = 0;
-        audio2.setVolume(volume);
+        audio.setVolume(volume);
         Serial.print("音量已调到: ");
         Serial.println(volume);
         // 在屏幕上显示音量
@@ -1017,7 +1016,7 @@ void VolumeSet()
         {
             volume = 0;
         }
-        audio2.setVolume(volume);
+        audio.setVolume(volume);
         Serial.print("音量已调到: ");
         Serial.println(volume);
         // 在屏幕上显示音量
@@ -1035,7 +1034,7 @@ void response()
     tft.fillScreen(TFT_BLACK);
     tft.setCursor(0, 0);
     tft.print("assistant: ");
-    audio2.connecttospeech(Answer.c_str(), "zh");
+    audio.connecttospeech(Answer.c_str(), "zh");
     displayWrappedText(Answer.c_str(), tft.getCursorX(), tft.getCursorY() + 11, width);
     Answer = "";
 }
@@ -1101,7 +1100,7 @@ void onMessageCallback1(WebsocketsMessage message)
             if ((askquestion.indexOf("声音") == -1 && askquestion.indexOf("音量") == -1) && !((askquestion.indexOf("开") > -1 || askquestion.indexOf("关") > -1) && askquestion.indexOf("灯") > -1) && !(askquestion.indexOf("暂停") > -1 || askquestion.indexOf("恢复") > -1))
             {
                 webSocketClient.close(); // 关闭llm服务器，打断上一次提问的回答生成
-                audio2.isplaying = 0;
+                audio.isplaying = 0;
                 startPlay = false;
                 Answer = "";
                 flag = 0;
@@ -1162,26 +1161,26 @@ void onMessageCallback1(WebsocketsMessage message)
                 openWeb();
                 displayWrappedText("热点ESP32-Setup已开启，密码为12345678，可在浏览器中打开http://192.168.4.1进行网络和音乐信息配置！", 0, u8g2.getCursorY() + 12, width);
             }
-            else if (audio2.isplaying == 1 && askquestion.indexOf("暂停") > -1)
+            else if (audio.isplaying == 1 && askquestion.indexOf("暂停") > -1)
             {
                 tft.fillRect(0, 148, 50, 12, TFT_WHITE); // 清空左下角的“请说话！”提示
-                if (audio2.isRunning())
+                if (audio.isRunning())
                 {
                     Serial.println("已经暂停！");
-                    audio2.pauseResume();
+                    audio.pauseResume();
                 }
                 else
                 {
                     Serial.println("当前没有音频正在播放！");
                 }
             }
-            else if (audio2.isplaying == 1 && askquestion.indexOf("恢复") > -1)
+            else if (audio.isplaying == 1 && askquestion.indexOf("恢复") > -1)
             {
                 tft.fillRect(0, 148, 50, 12, TFT_WHITE); // 清空左下角的“请说话！”提示
-                if (!audio2.isRunning())
+                if (!audio.isRunning())
                 {
                     Serial.println("已经恢复！");
-                    audio2.pauseResume();
+                    audio.pauseResume();
                 }
                 else
                 {
@@ -1257,7 +1256,7 @@ void onMessageCallback1(WebsocketsMessage message)
                     musicplay = 0;
                     tft.print("assistant: ");
                     Answer = "好的，那主人还有其它吩咐吗？嗯~";
-                    audio2.connecttospeech(Answer.c_str(), "zh");
+                    audio.connecttospeech(Answer.c_str(), "zh");
                     displayWrappedText(Answer.c_str(), tft.getCursorX(), tft.getCursorY() + 11, width);
                     Answer = "";
                     conStatus = 0;
@@ -1273,7 +1272,7 @@ void onMessageCallback1(WebsocketsMessage message)
 
                     String audioStreamURL = "https://music.163.com/song/media/outer/url?id=" + musicID + ".mp3";
                     Serial.println(audioStreamURL.c_str());
-                    audio2.connecttohost(audioStreamURL.c_str());
+                    audio.connecttohost(audioStreamURL.c_str());
 
                     if (musicplay == 0)
                         askquestion = "正在播放音乐：" + musicName;
@@ -1299,7 +1298,7 @@ void onMessageCallback1(WebsocketsMessage message)
 
                     String audioStreamURL = "https://music.163.com/song/media/outer/url?id=" + musicID + ".mp3";
                     Serial.println(audioStreamURL.c_str());
-                    audio2.connecttohost(audioStreamURL.c_str());
+                    audio.connecttohost(audioStreamURL.c_str());
 
                     if (musicplay == 0)
                         askquestion = "正在播放音乐：" + musicName;
@@ -1324,7 +1323,7 @@ void onMessageCallback1(WebsocketsMessage message)
 
                     String audioStreamURL = "https://music.163.com/song/media/outer/url?id=" + musicID + ".mp3";
                     Serial.println(audioStreamURL.c_str());
-                    audio2.connecttohost(audioStreamURL.c_str());
+                    audio.connecttohost(audioStreamURL.c_str());
 
                     if (musicplay == 0)
                         askquestion = "正在播放音乐：" + musicName;
@@ -1398,7 +1397,7 @@ void onMessageCallback1(WebsocketsMessage message)
                         Serial.println("未找到对应的音乐！");
                         tft.print("assistant: ");
                         Answer = "主人，曲库里还没有这首歌哦，换一首吧，嗯~";
-                        audio2.connecttospeech(Answer.c_str(), "zh");
+                        audio.connecttospeech(Answer.c_str(), "zh");
                         displayWrappedText(Answer.c_str(), tft.getCursorX(), tft.getCursorY() + 11, width);
                         Answer = "";
                         conflag = 1;
@@ -1407,7 +1406,7 @@ void onMessageCallback1(WebsocketsMessage message)
                     {
                         String audioStreamURL = "https://music.163.com/song/media/outer/url?id=" + musicID + ".mp3";
                         Serial.println(audioStreamURL.c_str());
-                        audio2.connecttohost(audioStreamURL.c_str());
+                        audio.connecttohost(audioStreamURL.c_str());
 
                         if (musicplay == 0)
                             askquestion = "正在播放音乐：" + musicName;
@@ -1476,7 +1475,7 @@ void onMessageCallback1(WebsocketsMessage message)
                     mainStatus = 0;
                     tft.print("assistant: ");
                     Answer = "好的，那主人还有其它吩咐吗？嗯~";
-                    audio2.connecttospeech(Answer.c_str(), "zh");
+                    audio.connecttospeech(Answer.c_str(), "zh");
                     displayWrappedText(Answer.c_str(), tft.getCursorX(), tft.getCursorY() + 11, width);
                     Answer = "";
                     conflag = 1;
@@ -1540,7 +1539,7 @@ void onMessageCallback1(WebsocketsMessage message)
                     Serial.println("未找到对应的音乐！");
                     tft.print("assistant: ");
                     Answer = "好的嗯，主人，你想听哪首歌呢，嗯~";
-                    audio2.connecttospeech(Answer.c_str(), "zh");
+                    audio.connecttospeech(Answer.c_str(), "zh");
                     displayWrappedText(Answer.c_str(), tft.getCursorX(), tft.getCursorY() + 11, width);
                     Answer = "";
                     conflag = 1;
@@ -1551,7 +1550,7 @@ void onMessageCallback1(WebsocketsMessage message)
                     // 自建音乐服务器（这里白嫖了网易云的音乐服务器），按照音乐数字id查找对应歌曲
                     String audioStreamURL = "https://music.163.com/song/media/outer/url?id=" + musicID + ".mp3";
                     Serial.println(audioStreamURL.c_str());
-                    audio2.connecttohost(audioStreamURL.c_str());
+                    audio.connecttohost(audioStreamURL.c_str());
 
                     if (musicplay == 0)
                         askquestion = "正在播放音乐：" + musicName;
@@ -1576,7 +1575,7 @@ void onMessageCallback1(WebsocketsMessage message)
                 tft.setCursor(0, 0);
                 getText("user", askquestion);
                 Answer = "这就开始放映主人喜欢的图片，嗯~";
-                audio2.connecttospeech(Answer.c_str(), "zh");
+                audio.connecttospeech(Answer.c_str(), "zh");
                 getText("assistant", Answer);
                 Answer = "";
                 image_show = 1;
@@ -1674,10 +1673,10 @@ void onEventsCallback1(WebsocketsEvent event, String data)
             JsonObject data = doc.createNestedObject("data");
 
             // 录制音频数据
-            audio1.Record();
+            mic.Record();
 
             // 计算音频数据的RMS值
-            float rms = calculateRMS((uint8_t *)audio1.wavData[0], 1280);
+            float rms = calculateRMS((uint8_t *)mic.wavData[0], 1280);
             if (null_voice < 10 && rms > 1000) // 抑制录音初期奇奇怪怪的噪声
             {
                 rms = 8.6;
@@ -1732,7 +1731,7 @@ void onEventsCallback1(WebsocketsEvent event, String data)
             {
                 data["status"] = 2;
                 data["format"] = "audio/L16;rate=8000";
-                data["audio"] = base64::encode((byte *)audio1.wavData[0], 1280);
+                data["audio"] = base64::encode((byte *)mic.wavData[0], 1280);
                 data["encoding"] = "raw";
 
                 String jsonString;
@@ -1749,7 +1748,7 @@ void onEventsCallback1(WebsocketsEvent event, String data)
             {
                 data["status"] = 0;
                 data["format"] = "audio/L16;rate=8000";
-                data["audio"] = base64::encode((byte *)audio1.wavData[0], 1280);
+                data["audio"] = base64::encode((byte *)mic.wavData[0], 1280);
                 data["encoding"] = "raw";
 
                 JsonObject common = doc.createNestedObject("common");
@@ -1777,7 +1776,7 @@ void onEventsCallback1(WebsocketsEvent event, String data)
                 // 处理后续帧音频数据
                 data["status"] = 1;
                 data["format"] = "audio/L16;rate=8000";
-                data["audio"] = base64::encode((byte *)audio1.wavData[0], 1280);
+                data["audio"] = base64::encode((byte *)mic.wavData[0], 1280);
                 data["encoding"] = "raw";
 
                 String jsonString;

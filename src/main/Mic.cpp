@@ -1,6 +1,6 @@
-#include "Audio1.h"
+#include "Mic.h"
 
-Audio1::Audio1()
+Mic::Mic()
 {
   // 构造函数中初始化成员变量和分配内存
   wavData = nullptr;
@@ -12,7 +12,7 @@ Audio1::Audio1()
   // i2s = new I2S(micType);
 }
 
-Audio1::~Audio1()
+Mic::~Mic()
 {
   for (int i = 0; i < wavDataSize / dividedWavDataSize; ++i)
     delete[] wavData[i];
@@ -20,19 +20,19 @@ Audio1::~Audio1()
   delete i2s;
 }
 
-void Audio1::init()
+void Mic::init()
 {
   wavData = new char *[1];
   for (int i = 0; i < 1; ++i)
     wavData[i] = new char[1280];
 }
 
-void Audio1::clear()
+void Mic::clear()
 {
   i2s->clear();
 }
 
-void Audio1::CreateWavHeader(byte *header, int waveDataSize)
+void Mic::CreateWavHeader(byte *header, int waveDataSize)
 {
   header[0] = 'R';
   header[1] = 'I';
@@ -81,7 +81,7 @@ void Audio1::CreateWavHeader(byte *header, int waveDataSize)
   header[43] = (byte)((waveDataSize >> 24) & 0xFF);
 }
 
-void Audio1::Record()
+void Mic::Record()
 {
   i2s->Read(i2sBuffer, i2sBufferSize);
   for (int i = 0; i < i2sBufferSize / 8; ++i)
@@ -128,7 +128,7 @@ void Audio1::Record()
   // return Question;
 }
 
-String Audio1::parseJSON(const char *jsonResponse)
+String Mic::parseJSON(const char *jsonResponse)
 {
   DynamicJsonDocument doc(1024);
 
@@ -146,7 +146,7 @@ String Audio1::parseJSON(const char *jsonResponse)
   return String(question);
 }
 
-float Audio1::calculateRMS(uint8_t *buffer, int bufferSize)
+float Mic::calculateRMS(uint8_t *buffer, int bufferSize)
 {
   float sum = 0;
   int16_t sample;
