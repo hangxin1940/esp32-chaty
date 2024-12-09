@@ -20,8 +20,6 @@
 #define I2S_DOUT 40 // DIN引脚
 #define I2S_BCLK 42 // BCLK引脚
 #define I2S_LRC 2   // LRC引脚
-//  优先事项！！！一定要做，不做的话麦克风会因为引脚冲突无法工作
-//  找到.pio\libdeps\upesy_wroom\TFT_eSPI路径下的User_Setup.h文件，删除它，然后将根目录下的User_Setup.h文件剪切粘贴过去
 
 int llm = 0; // 大模型选择参数:0:豆包，1：讯飞星火，2：通义千问
 
@@ -298,7 +296,7 @@ void setup()
     u8g2.setForegroundColor(0x7E7B);        // 设置字体颜色为黑色
     // 显示文字
     u8g2.setCursor(0, 11);
-    u8g2.print("CHAT-Y !!!");
+    u8g2.print("HELLO CHAT-Y !");
 
     // 初始化音频模块mic
     mic.init();

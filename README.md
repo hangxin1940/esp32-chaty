@@ -44,5 +44,32 @@ ESP32-CHATY
 
 ## 构建前
 
-将[User_Setup.h](User_Setup.h)覆盖至 `.pio/libdeps/esp32-s3-devkitm-1/TFT_eSPI/User_Setup.h`
+### 修改`TFT_eSPI`的引脚配置
 
+修改 [lib/TFT_eSPI_Setups/User_Setup_Select.h](lib/TFT_eSPI_Setups/User_Setup_Select.h)
+
+```
+///////////////////////////////////////////////////////
+//   User configuration selection lines are below    //
+///////////////////////////////////////////////////////
+
+// Only ONE line below should be uncommented to define your setup.  Add extra lines and files as needed.
+
+#include <User_Setup.h>           // Default setup is root library folder
+```
+
+为
+
+```
+///////////////////////////////////////////////////////
+//   User configuration selection lines are below    //
+///////////////////////////////////////////////////////
+
+// Only ONE line below should be uncommented to define your setup.  Add extra lines and files as needed.
+
+#include <../TFT_eSPI_Setups/User_Setup.h>           // Default setup is root library folder
+```
+
+[lib/TFT_eSPI_Setups/User_Setup_Select.h](lib/TFT_eSPI_Setups/User_Setup_Select.h)
+文件为指向[.pio/libdeps/esp32-s3-devkitm-1/TFT_eSPI/User_Setup_Select.h](.pio/libdeps/esp32-s3-devkitm-1/TFT_eSPI/User_Setup_Select.h)
+的软连接，在项目初始化或`TFT_eSPI`库有变动时都需要修改。
