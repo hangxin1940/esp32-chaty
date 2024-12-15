@@ -40,6 +40,7 @@ void setup()
     ai.http_timeout = http_timeout;
     ai.openai_apiKey = openai_apiKey;
     ai.system_role = system_role;
+    ai.audio = &audio;
 
     // 初始化Preferences
     preferences.begin("wifi_store");
@@ -115,22 +116,6 @@ void VolumeSet(String numberStr)
     // tft.print("volume:");
     // tft.print(volume);
 
-    conflag = 1;
-}
-
-void speakAnswer(String anwser)
-{
-    if (anwser != "")
-    {
-        // tft.fillScreen(TFT_BLACK);
-        // tft.setCursor(0, 0);
-        // tft.print("assistant: ");
-
-        String url = base_url + "/v1/audio/speech?file=1&input=" + anwser;
-        Serial.println(url);
-        audio.connecttohost(url.c_str());
-        delay(500);
-    }
     conflag = 1;
 }
 
@@ -259,7 +244,8 @@ void startRecording()
                         if (answer != nullptr && strcmp(answer.c_str(), "") != 0)
                         {
                             screen.screen_zh_println(TFT_GREENYELLOW, answer);
-                            speakAnswer(answer);
+                            ai.audio_speech(answer);
+                            conflag = 1;
                         }
                     }
 

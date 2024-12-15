@@ -263,3 +263,14 @@ int AIClient::audioTranscriptions(int frame_index, String audio_id, int is_finis
     }
 }
 
+bool AIClient::audio_speech(String content)
+{
+    if (content != "")
+    {
+        String url = base_url + "/v1/audio/speech?file=1&input=" + content;
+        Serial.println(url);
+        return audio->connecttohost(url.c_str());
+    }
+    return true;
+}
+
