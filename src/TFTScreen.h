@@ -18,7 +18,8 @@ public:
     void screen_init();
     void fillScreen(uint32_t color);
     void screen_zh_println();
-    void screen_zh_println(uint32_t color, String text); // Corrected function signature
+    void screen_zh_println(uint32_t color, String text);
+    void pushImage(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t *data);
 };
 
 #endif //TFT_SCREEN_H

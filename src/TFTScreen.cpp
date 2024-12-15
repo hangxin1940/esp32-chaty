@@ -102,3 +102,8 @@ void TFTScreen::screen_zh_println(uint32_t color, String text)
         // u8g2.setCursor(cursorX, cursorY + 12);
     }
 }
+
+void TFTScreen::pushImage(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t *data)
+{
+    tft.pushImage(x, y, w, h, data);
+}

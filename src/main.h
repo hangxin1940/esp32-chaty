@@ -10,14 +10,14 @@
 #include <Wire.h>
 #include "WiFi.h"
 #include <WiFiClientSecure.h>
-#include "HTTPClient.h"
+
 #include "Mic.h"
 #include "Audio.h"
-#include <ArduinoJson.h>
-#include <ArduinoWebsockets.h>
 #include "WebServer.h"
 #include "tiger_1.h"
 #include "TFTScreen.h"
+#include "helper.h"
+#include "AIClient.h"
 
 // 定义引脚
 #define key 0 // boot按键引脚
@@ -49,7 +49,6 @@ int cursorY = 0;
 int awake_flag = 1;
 
 
-String Answer = ""; // 存储llm回答，用于语音合成（较短的回答）
 int loopcount = 0; // 对话次数计数器
 int conflag = 0; // 用于连续对话
 int await_flag = 1; // 待机标识
@@ -57,6 +56,7 @@ int start_con = 0; // 标识是否开启了一轮对话
 int image_show = 0;
 
 TFTScreen screen;
+AIClient ai;
 
 // 创建音频对象
 Mic mic;
@@ -68,11 +68,5 @@ Audio audio(false, 3, I2S_NUM_1);
 // 函数声明
 float calculateRMS(uint8_t* buffer, int bufferSize);
 int wifiConnect();
-void chat_completions(String content);
-void chat_completions_stream(String content);
-DynamicJsonDocument generate_chat_json(String content, bool stream);
-int audioTranscriptions(int frame_index, String audio_id, int is_finished, uint8_t* audio_payload, size_t size,
-                        String& output);
-String randomString(int len);
 void startRecording();
 void VolumeSet(String numberStr);
