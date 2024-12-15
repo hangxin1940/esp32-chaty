@@ -8,7 +8,7 @@ inline String randomString(int len)
     String str = "";
     for (int i = 0; i < len; ++i)
     {
-        str += charset[rand() % maxIndex];
+        str += charset[esp_random() % maxIndex];
     }
     return str;
 }

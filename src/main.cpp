@@ -166,12 +166,9 @@ void startRecording()
         }
 
 
-        // 录制音频数据
-        mic.Record();
-
-        // 计算音频数据的RMS值
-        float rms = calculateRMS((uint8_t*)mic.wavData[0], 1280);
-
+        // 录制音频数据并获取rms
+        // TODO 缓存后再发送
+        float rms = mic.RecordVoice();
 
         bool valid_rms = rms > noise_low && rms < 20000;
 
@@ -226,7 +223,7 @@ void startRecording()
             }
 
             String stt_text;
-            int result = ai.audioTranscriptions(frame_index, audio_id, is_finish, (byte*)mic.wavData[0], 1280,
+            int result = ai.audioTranscriptions(frame_index, audio_id, is_finish, (byte*)mic.get_wav_data(), 1280,
                                                 stt_text);
             if (result == 0)
             {
@@ -350,27 +347,4 @@ int wifiConnect()
     screen.screen_zh_println(TFT_WHITE, "或者连接热点ESP32-Setup密码为12345678，然后在浏览器中打开http://192.168.4.1添加新的网络！");
     preferences.end();
     return 0;
-}
-
-// 计算录音数据的均方根值
-float calculateRMS(uint8_t* buffer, int bufferSize)
-{
-    float sum = 0; // 初始化总和变量
-    int16_t sample; // 定义16位整数类型的样本变量
-
-    // 遍历音频数据缓冲区，每次处理两个字节（16位）
-    for (int i = 0; i < bufferSize; i += 2)
-    {
-        // 将两个字节组合成一个16位的样本值
-        sample = (buffer[i + 1] << 8) | buffer[i];
-
-        // 将样本值平方后累加到总和中
-        sum += sample * sample;
-    }
-
-    // 计算平均值（样本总数为bufferSize / 2）
-    sum /= (bufferSize / 2);
-
-    // 返回总和的平方根，即RMS值
-    return sqrt(sum);
 }

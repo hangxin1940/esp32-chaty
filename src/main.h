@@ -66,7 +66,6 @@ Audio audio(false, 3, I2S_NUM_1);
 // 指定使用哪个I2S端口。ESP32有两个I2S端口，I2S_NUM_0和I2S_NUM_1。可以根据需要选择不同的I2S端口。
 
 // 函数声明
-float calculateRMS(uint8_t* buffer, int bufferSize);
 int wifiConnect();
 void startRecording();
 void VolumeSet(String numberStr);
