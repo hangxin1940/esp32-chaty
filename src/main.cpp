@@ -61,7 +61,7 @@ void setup()
         tft.fillScreen(TFT_BLACK);
         u8g2.setCursor(0, 11);
         u8g2.print("网络连接成功！");
-        displayWrappedText("请进行语音唤醒或按boot键开始对话！", 0, u8g2.getCursorY() + 12, width);
+        displayWrappedText("请进行语音唤醒或按boot键开始对话！", 0, u8g2.getCursorY(), width);
         awake_flag = 0;
     }
     else
@@ -110,14 +110,15 @@ void loop()
 }
 
 // 自动换行显示u8g2文本的函数
-void displayWrappedText(const string& text1, int x, int y, int maxWidth)
+void displayWrappedText(const String text, int x, int y, int maxWidth)
 {
     tft.setTextColor(TFT_BLUE); // 设置字体颜色
     int cursorX = x;
-    int cursorY = y + 24;
+    int cursorY = y+12;
     int lineHeight = u8g2.getFontAscent() - u8g2.getFontDescent() + 2; // 中文字符12像素高度
     int start = 0; // 指示待输出字符串已经输出到哪一个字符
-    int num = text1.size();
+    const char* text_char = text.c_str();
+    int num = strlen(text_char);
     int i = 0;
 
     while (start < num)
@@ -130,10 +131,10 @@ void displayWrappedText(const string& text1, int x, int y, int maxWidth)
         while (i < num)
         {
             int size = 1;
-            if (text1[i] & 0x80)
+            if (text_char[i] & 0x80)
             {
                 // 核心所在
-                char temp = text1[i];
+                char temp = text_char[i];
                 temp <<= 1;
                 do
                 {
@@ -142,10 +143,11 @@ void displayWrappedText(const string& text1, int x, int y, int maxWidth)
                 }
                 while (temp & 0x80);
             }
-            string subWord;
-            subWord = text1.substr(i, size); // 取得单个中文或英文字符
+            char subWord[size];
+            memcpy(subWord, &text_char[i], size);
+            subWord[size] = '\0';
+            int charBytes = size; // 获取字符的字节长度
 
-            int charBytes = subWord.size(); // 获取字符的字节长度
 
             int charWidth = charBytes == 3 ? 12 : 6; // 中文字符12像素宽度，英文字符6像素宽度
             if (wid + charWidth > maxWidth - cursorX)
@@ -160,16 +162,24 @@ void displayWrappedText(const string& text1, int x, int y, int maxWidth)
 
         if (cursorY <= height - 10)
         {
-            u8g2.print(text1.substr(start, numBytes).c_str());
+            char subWord[numBytes];
+            memcpy(subWord, &text_char[start], numBytes);
+            subWord[numBytes] = '\0';
+
+            u8g2.print(subWord);
             cursorY += lineHeight;
             cursorX = 0;
             start += numBytes;
         }
         else
         {
-            text_temp = text1.substr(start).c_str();
+            text_temp = text.substring(start).c_str();
             break;
         }
+    }
+    if (cursorX > 0)
+    {
+        // u8g2.setCursor(cursorX, cursorY + 12);
     }
 }
 
@@ -257,8 +267,14 @@ void startRecording()
         tft.fillScreen(TFT_BLACK);
         u8g2.setCursor(0, 11);
         u8g2.print("待机中......");
+        displayWrappedText("1请进行语音唤醒或按boot键开始对话！", 0, u8g2.getCursorY(), width);
+        displayWrappedText("2请进行语音唤醒或按boot键开始对话！", 0, u8g2.getCursorY(), width);
+        displayWrappedText("3请进行语音唤醒或按boot键开始对话！", 0, u8g2.getCursorY(), width);
+        displayWrappedText("4请进行语音唤醒或按boot键开始对话！", 0, u8g2.getCursorY(), width);
+        displayWrappedText("5请进行语音唤醒或按boot键开始对话！", 0, u8g2.getCursorY(), width);
+        displayWrappedText("6请进行语音唤醒或按boot键开始对话！", 0, u8g2.getCursorY(), width);
         // tft.pushImage(0, 0, width, height, image_data_client_pic);
-        tft.pushImage(0, 0, width, height, image_data_tiger_1);
+        // tft.pushImage(0, 0, width, height, image_data_tiger_1);
     }
     else if (conflag == 1)
     {

@@ -32,7 +32,7 @@
 String system_role = "";
 
 const char* openai_apiKey = "";
-String base_url = "http://192.168.1.6:12345";
+String base_url = "http://192.168.1.16:12345";
 
 // 定义一些全局变量
 bool ledstatus = true; // 控制led闪烁
@@ -65,7 +65,7 @@ Audio audio(false, 3, I2S_NUM_1);
 // 指定使用哪个I2S端口。ESP32有两个I2S端口，I2S_NUM_0和I2S_NUM_1。可以根据需要选择不同的I2S端口。
 
 // 函数声明
-void displayWrappedText(const string& text1, int x, int y, int maxWidth);
+void displayWrappedText(const String text, int x, int y, int maxWidth);
 float calculateRMS(uint8_t* buffer, int bufferSize);
 int wifiConnect();
 void chat_completions(String content);
