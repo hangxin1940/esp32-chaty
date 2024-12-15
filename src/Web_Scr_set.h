@@ -1,17 +1,8 @@
 #ifndef Web_Scr_h
 #define Web_Scr_h
 
-#include <Arduino.h>
-#include "base64.h"
-#include "WiFi.h"
-#include <WiFiClientSecure.h>
-#include "HTTPClient.h"
-#include "Mic.h"
-#include "Audio.h"
-#include <ArduinoJson.h>
-#include <ArduinoWebsockets.h>
-#include <Wire.h>
-#include <SD.h>
+
+
 // 与AP模式和Web服务器有关的库
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
@@ -35,12 +26,9 @@ extern Preferences preferences;
 void openWeb();
 void handleRoot(AsyncWebServerRequest *request);
 void handleWifiManagement(AsyncWebServerRequest *request);
-void handleMusicManagement(AsyncWebServerRequest *request);
 void handleSave(AsyncWebServerRequest *request);
 void handleDelete(AsyncWebServerRequest *request);
 void handleList(AsyncWebServerRequest *request);
-void handleSaveMusic(AsyncWebServerRequest *request);
-void handleDeleteMusic(AsyncWebServerRequest *request);
-void handleListMusic(AsyncWebServerRequest *request);
+
 
 #endif

@@ -2,10 +2,7 @@
 #define _AUDIO_H
 
 #include <Arduino.h>
-#include "base64.h"
 #include "I2S.h"
-#include <WiFi.h>
-#include <ArduinoJson.h>
 
 // 16位，单声道，16000Hz，线性PCM
 class Mic
