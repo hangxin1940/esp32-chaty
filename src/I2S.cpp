@@ -11,11 +11,7 @@
 #define PIN_I2S_LRC  39
 #define PIN_I2S_DIN 7
 
-//分离板针脚定义
-// #define PIN_I2S_BCLK 4
-// #define PIN_I2S_LRC  6
-// #define PIN_I2S_DIN 5
-// #define PIN_I2S_DOUT 25
+
 const i2s_port_t I2S_PORT = I2S_NUM_0;
 const int BLOCK_SIZE = 128;
 // This I2S specification :

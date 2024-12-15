@@ -15,7 +15,7 @@
 String system_role = "";
 
 const char* openai_apiKey = "";
-String base_url = "http://192.168.1.6:12345"; // Chatgpt的API代理地址
+String base_url = "http://192.168.1.6:12345";
 
 // 定义一些全局变量
 bool ledstatus = true; // 控制led闪烁
@@ -75,26 +75,7 @@ int audioTranscriptions(int frame_index, String audio_id, int is_finished, uint8
 String randomString(int len);
 void startRecording();
 void tft_print_chat(String role, String content);
-
-void imageshow()
-{
-    tft.fillScreen(TFT_BLACK);
-    int count = 2;
-    while (count)
-    {
-        for (int i = 0; i < bizhi_size; i++)
-        {
-            tft.pushImage(0, 0, width, height, bizhi[i]); // 用于壁纸显示的代码
-            for (int j = 0; j < 100; j++) // 每隔一秒显示一张，同时保证显示壁纸时可以正常播放语音
-            {
-                audio.loop();
-                delay(10);
-            }
-        }
-        count--;
-    }
-    image_show = 0;
-}
+char* urlencode(const char* str, bool spacesOnly);
 
 void setup()
 {
@@ -180,13 +161,13 @@ void loop()
     audio.loop();
 
     // 如果音频正在播放
-    if (audio.isplaying == 1)
+    if (audio.isRunning())
         digitalWrite(led, HIGH); // 点亮板载LED指示灯
     else
         digitalWrite(led, LOW); // 熄灭板载LED指示灯
 
     // 唤醒词识别
-    if (audio.isplaying == 0 && awake_flag == 0 && await_flag == 1)
+    if (!audio.isRunning() && awake_flag == 0 && await_flag == 1)
     {
         awake_flag = 1;
         startRecording();
@@ -202,19 +183,13 @@ void loop()
         startRecording();
     }
     // 连续对话
-    if (audio.isplaying == 0 && Answer == "" && subindex == subAnswers.size() && musicplay == 0 && conflag == 1 &&
+    if (!audio.isRunning() && Answer == "" && subindex == subAnswers.size() && musicplay == 0 && conflag == 1 &&
         image_show == 0)
     {
         loopcount++;
         Serial.print("loopcount：");
         Serial.println(loopcount);
         startRecording();
-    }
-
-
-    if (audio.isplaying == 1 && image_show == 1)
-    {
-        imageshow();
     }
 }
 
@@ -338,7 +313,9 @@ void speakAnswer()
         tft.fillScreen(TFT_BLACK);
         tft.setCursor(0, 0);
         tft.print("assistant: ");
-        audio.connecttospeech(Answer.c_str(), "zh");
+
+        String url = base_url + "/v1/audio/speech?file=1&input=" + Answer;
+        audio.connecttohost(url.c_str());
         displayWrappedText(Answer.c_str(), tft.getCursorX(), tft.getCursorY(), width);
         Answer = "";
         delay(500);

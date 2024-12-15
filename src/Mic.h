@@ -16,23 +16,6 @@ class Mic
   char i2sBuffer[i2sBufferSize];
   const int DATA_JSON_SIZE = 512;
   char data_json[512];
-  String Question = "";
-
-  WiFiClient client; // @suppress("Abstract class cannot be instantiated")
-  // WiFiClientSecure clientsecure; // @suppress("Abstract class cannot be instantiated")
-  WiFiClient *_client = nullptr;
-  const char *header_format = "{"
-                              "\"format\":\"pcm\","
-                              "\"rate\":8000,"
-                              "\"dev_pid\":1537,"
-                              "\"channel\":1,"
-                              "\"cuid\":\"\","
-                              "\"token\":\"\","
-                              "\"speech\":\"";
-
-  const char *footer_format = "\",\"len\":";
-  void CreateWavHeader(byte *header, int waveDataSize);
-  String parseJSON(const char *jsonResponse);
   float calculateRMS(uint8_t *buffer, int bufferSize);
 
 public:
