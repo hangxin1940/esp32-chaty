@@ -55,10 +55,6 @@ void setup()
     u8g2.setCursor(0, u8g2.getCursorY() + 12);
     u8g2.print("正在连接网络······");
     int result = wifiConnect();
-
-    // 从百度服务器获取当前时间
-    getTimeFromServer();
-
     if (result == 1)
     {
         // 清空屏幕，在屏幕上输出提示信息
@@ -72,8 +68,6 @@ void setup()
     {
         openWeb();
     }
-    // 记录当前时间，用于后续时间戳比较
-    urlTime = millis();
     // 延迟1000毫秒，便于用户查看屏幕显示的信息，同时使设备充分初始化
     delay(1000);
 }
@@ -106,8 +100,7 @@ void loop()
         startRecording();
     }
     // 连续对话
-    if (!audio.isRunning() && Answer == "" && subindex == subAnswers.size() && musicplay == 0 && conflag == 1 &&
-        image_show == 0)
+    if (!audio.isRunning() && Answer == "" && conflag == 1 && image_show == 0)
     {
         loopcount++;
         Serial.print("loopcount：");
@@ -290,7 +283,6 @@ void startRecording()
             start_con = 1; // 对话开始标识
             await_flag = 0;
             frame_index = 0;
-            webSocketClient1.close();
             break;
         }
 
@@ -495,21 +487,6 @@ int wifiConnect()
     return 0;
 }
 
-void getTimeFromServer()
-{
-    String timeurl = "https://www.baidu.com"; // 定义用于获取时间的URL
-    HTTPClient http; // 创建HTTPClient对象
-    http.begin(timeurl); // 初始化HTTP连接
-    const char* headerKeys[] = {"Date"}; // 定义需要收集的HTTP头字段
-    http.collectHeaders(headerKeys, sizeof(headerKeys) / sizeof(headerKeys[0])); // 设置要收集的HTTP头字段
-    int httpCode = http.GET(); // 发送HTTP GET请求
-    Date = http.header("Date"); // 从HTTP响应头中获取Date字段
-    Serial.println(Date); // 输出获取到的Date字段到串口
-    http.end(); // 结束HTTP连接
-
-    // delay(50); // 根据实际情况可以添加延时，以便避免频繁请求
-}
-
 // 计算录音数据的均方根值
 float calculateRMS(uint8_t* buffer, int bufferSize)
 {
@@ -537,7 +514,7 @@ float calculateRMS(uint8_t* buffer, int bufferSize)
 void chat_completions(String content)
 {
     HTTPClient http;
-    http.setTimeout(20000); // 设置请求超时时间
+    http.setTimeout(http_timeout); // 设置请求超时时间
     http.begin(base_url + "/v1/chat/completions");
     http.addHeader("Content-Type", "application/json");
     String token_key = String("Bearer ") + openai_apiKey;
@@ -593,7 +570,7 @@ void chat_completions(String content)
 void chat_completions_stream(String content)
 {
     HTTPClient http;
-    http.setTimeout(20000); // 设置请求超时时间
+    http.setTimeout(http_timeout); // 设置请求超时时间
     http.begin(base_url + "/v1/chat/completions");
     http.addHeader("Content-Type", "application/json");
     String token_key = String("Bearer ") + openai_apiKey;
@@ -704,7 +681,7 @@ int audioTranscriptions(int frame_index, String audio_id, int is_finished, uint8
                         String& output)
 {
     HTTPClient http;
-    http.setTimeout(20000); // 设置请求超时时间
+    http.setTimeout(http_timeout); // 设置请求超时时间
     http.begin(base_url + "/v1/audio/transcriptions");
     http.addHeader("Content-Type", "multipart/form-data");
     String token_key = String("Bearer ") + openai_apiKey;
