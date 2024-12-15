@@ -25,22 +25,10 @@ void setup()
     // 将light初始化为低电平
     digitalWrite(lcd_led, HIGH);
     // 初始化屏幕
-    tft.init();
-    tft.setRotation(0); // 设置屏幕方向，0-3顺时针转
-    tft.setSwapBytes(true);
-    tft.fillScreen(TFT_BLACK); // 设置屏幕背景为黑色
-    // tft.setTextColor(TFT_BLUE); // 设置字体颜色为白色
-    // tft.setTextColor(0x5DCE); // 设置字体颜色为黑色
-    tft.setTextWrap(true); // 开启文本自动换行，只支持英文
-
-    // 初始化U8g2
-    u8g2.begin(tft);
-    u8g2.setFont(u8g2_font_wqy12_t_gb2312); // 设置中文字体库
-    u8g2.setFontMode(1); // 设置字体模式为透明模式，不设置的话中文字符会变成一个黑色方块
-    u8g2.setForegroundColor(0x7E7B); // 设置字体颜色为黑色
+    screen.init();
     // 显示文字
-    u8g2.setCursor(0, 11);
-    u8g2.print("HELLO CHAT-Y !");
+    screen.screen_zh_println(TFT_RED,"HELLO CHAT-Y !");
+    screen.screen_zh_println();
 
     // 初始化音频模块mic
     mic.init();
@@ -52,16 +40,15 @@ void setup()
     preferences.begin("wifi_store");
     preferences.begin("music_store");
     // 连接网络
-    u8g2.setCursor(0, u8g2.getCursorY() + 12);
-    u8g2.print("正在连接网络······");
+    screen.screen_zh_println(TFT_WHITE,"正在连接网络······");
     int result = wifiConnect();
     if (result == 1)
     {
         // 清空屏幕，在屏幕上输出提示信息
-        tft.fillScreen(TFT_BLACK);
-        u8g2.setCursor(0, 11);
-        u8g2.print("网络连接成功！");
-        displayWrappedText("请进行语音唤醒或按boot键开始对话！", 0, u8g2.getCursorY(), width);
+        screen.fillScreen(TFT_BLACK);
+        screen.screen_zh_println(TFT_WHITE,"网络连接成功！");
+        screen.screen_zh_println();
+        screen.screen_zh_println(TFT_WHITE,"请进行语音唤醒或按boot键开始对话！");
         awake_flag = 0;
     }
     else
@@ -109,112 +96,6 @@ void loop()
     }
 }
 
-// 自动换行显示u8g2文本的函数
-void displayWrappedText(const String text, int x, int y, int maxWidth)
-{
-    tft.setTextColor(TFT_BLUE); // 设置字体颜色
-    int cursorX = x;
-    int cursorY = y+12;
-    int lineHeight = u8g2.getFontAscent() - u8g2.getFontDescent() + 2; // 中文字符12像素高度
-    int start = 0; // 指示待输出字符串已经输出到哪一个字符
-    const char* text_char = text.c_str();
-    int num = strlen(text_char);
-    int i = 0;
-
-    while (start < num)
-    {
-        u8g2.setCursor(cursorX, cursorY);
-        int wid = 0;
-        int numBytes = 0;
-
-        // Calculate how many bytes fit in the maxWidth
-        while (i < num)
-        {
-            int size = 1;
-            if (text_char[i] & 0x80)
-            {
-                // 核心所在
-                char temp = text_char[i];
-                temp <<= 1;
-                do
-                {
-                    temp <<= 1;
-                    ++size;
-                }
-                while (temp & 0x80);
-            }
-            char subWord[size];
-            memcpy(subWord, &text_char[i], size);
-            subWord[size] = '\0';
-            int charBytes = size; // 获取字符的字节长度
-
-
-            int charWidth = charBytes == 3 ? 12 : 6; // 中文字符12像素宽度，英文字符6像素宽度
-            if (wid + charWidth > maxWidth - cursorX)
-            {
-                break;
-            }
-            numBytes += charBytes;
-            wid += charWidth;
-
-            i += size;
-        }
-
-        if (cursorY <= height - 10)
-        {
-            char subWord[numBytes];
-            memcpy(subWord, &text_char[start], numBytes);
-            subWord[numBytes] = '\0';
-
-            u8g2.print(subWord);
-            cursorY += lineHeight;
-            cursorX = 0;
-            start += numBytes;
-        }
-        else
-        {
-            text_temp = text.substring(start).c_str();
-            break;
-        }
-    }
-    if (cursorX > 0)
-    {
-        // u8g2.setCursor(cursorX, cursorY + 12);
-    }
-}
-
-
-void tft_print_chat(String role, String content)
-{
-    int cursorX = 0;
-    int cursorY = 0; // 默认位置
-
-    if (role == "user")
-    {
-        cursorY = 0; // 用户角色，内容在 (0, 0)
-        tft.setCursor(cursorX, cursorY);
-        tft.setTextColor(0xFA20); // 设置字体颜色为
-        tft.print(role);
-        tft.print(": ");
-        u8g2.setForegroundColor(0x7E7B); // 设置字体颜色为黑色
-        // tft.setTextColor(TFT_PINK); // 设置字体颜色
-    }
-    else if (role == "assistant")
-    {
-        cursorY = 70; // 助手角色，内容在 (0, 70)
-        tft.setCursor(cursorX, cursorY);
-        tft.setTextColor(0x7FE0); // 设置字体颜色为
-        tft.print(role);
-        tft.print(": ");
-        u8g2.setForegroundColor(0x8DF1); // 设置字体颜色为黑色
-        // tft.setTextColor(0x8DF1); // 设置字体颜色为
-    }
-
-    displayWrappedText(content.c_str(), cursorX, tft.getCursorY(), width);
-
-    // 更新光标位置用于后续内容
-    tft.setCursor(0, tft.getCursorY() + 2);
-}
 
 // 音量控制
 void VolumeSet(String numberStr)
@@ -224,10 +105,10 @@ void VolumeSet(String numberStr)
     Serial.print("音量已调到: ");
     Serial.println(volume);
     // 在屏幕上显示音量
-    tft.fillRect(66, 152, 62, 7, TFT_WHITE);
-    tft.setCursor(66, 152);
-    tft.print("volume:");
-    tft.print(volume);
+    // tft.fillRect(66, 152, 62, 7, TFT_WHITE);
+    // tft.setCursor(66, 152);
+    // tft.print("volume:");
+    // tft.print(volume);
 
     conflag = 1;
 }
@@ -236,13 +117,13 @@ void speakAnswer()
 {
     if (Answer != "")
     {
-        tft.fillScreen(TFT_BLACK);
-        tft.setCursor(0, 0);
-        tft.print("assistant: ");
+        // tft.fillScreen(TFT_BLACK);
+        // tft.setCursor(0, 0);
+        // tft.print("assistant: ");
 
         String url = base_url + "/v1/audio/speech?file=1&input=" + Answer;
         audio.connecttohost(url.c_str());
-        displayWrappedText(Answer.c_str(), tft.getCursorX(), tft.getCursorY(), width);
+        screen.screen_zh_println(TFT_WHITE, Answer);
         Answer = "";
         delay(500);
     }
@@ -264,28 +145,22 @@ void startRecording()
 
     if (await_flag == 1)
     {
-        tft.fillScreen(TFT_BLACK);
-        u8g2.setCursor(0, 11);
-        u8g2.print("待机中......");
-        displayWrappedText("1请进行语音唤醒或按boot键开始对话！", 0, u8g2.getCursorY(), width);
-        displayWrappedText("2请进行语音唤醒或按boot键开始对话！", 0, u8g2.getCursorY(), width);
-        displayWrappedText("3请进行语音唤醒或按boot键开始对话！", 0, u8g2.getCursorY(), width);
-        displayWrappedText("4请进行语音唤醒或按boot键开始对话！", 0, u8g2.getCursorY(), width);
-        displayWrappedText("5请进行语音唤醒或按boot键开始对话！", 0, u8g2.getCursorY(), width);
-        displayWrappedText("6请进行语音唤醒或按boot键开始对话！", 0, u8g2.getCursorY(), width);
+        screen.fillScreen(TFT_BLACK);
+        screen.screen_zh_println(TFT_WHITE,"待机中......");
+        screen.screen_zh_println();
+        screen.screen_zh_println(TFT_WHITE,"请进行语音唤醒或按boot键开始对话！");
+        screen.fillScreen(TFT_BLACK);
         // tft.pushImage(0, 0, width, height, image_data_client_pic);
         // tft.pushImage(0, 0, width, height, image_data_tiger_1);
     }
     else if (conflag == 1)
     {
-        tft.fillScreen(TFT_BLACK);
-        u8g2.setCursor(0, 11);
-        u8g2.print("连续对话中，请说话！");
+        screen.fillScreen(TFT_BLACK);
+        screen.screen_zh_println(TFT_WHITE, "连续对话中，请说话！");
     }
     else
     {
-        u8g2.setCursor(0, 159);
-        u8g2.print("请说话！");
+        screen.screen_zh_println(TFT_WHITE, "请说话！");
     }
     conflag = 0;
 
@@ -379,12 +254,14 @@ void startRecording()
 
                         if (stt_text != nullptr && strcmp(stt_text, "") != 0)
                         {
-                            tft.fillScreen(TFT_BLACK);
-                            tft.setCursor(0, 0);
-                            // 发送给大模型
-                            tft_print_chat("user", stt_text);
+                            screen.fillScreen(TFT_BLACK);
+                            // tft.fillScreen(TFT_BLACK);
+                            // tft.setCursor(0, 0);
+                            // // 发送给大模型
+                            screen.screen_zh_println(TFT_WHITE, stt_text);
                             chat_completions(stt_text);
                             speakAnswer();
+                            screen.screen_zh_println(TFT_GREENYELLOW, Answer);
                             break;
                         }
                     }
@@ -422,10 +299,9 @@ int wifiConnect()
     if (numNetworks == 0)
     {
         // 在屏幕上输出提示信息
-        u8g2.setCursor(0, u8g2.getCursorY() + 12);
-        u8g2.print("无任何wifi存储信息！");
-        displayWrappedText("请连接热点ESP32-Setup密码为12345678，然后在浏览器中打开http://192.168.4.1添加新的网络！", 0, u8g2.getCursorY() + 12,
-                           width);
+        screen.screen_zh_println(TFT_WHITE,"无任何wifi存储信息！");
+        screen.screen_zh_println();
+        screen.screen_zh_println(TFT_WHITE,"请连接热点ESP32-Setup密码为12345678，然后在浏览器中打开http://192.168.4.1添加新的网络！");
         preferences.end();
         return 0;
     }
@@ -444,8 +320,7 @@ int wifiConnect()
             Serial.print("password:");
             Serial.println(password);
             // 在屏幕上显示每个网络的连接情况
-            u8g2.setCursor(0, u8g2.getCursorY() + 12);
-            u8g2.print(ssid);
+            screen.screen_zh_println(TFT_WHITE,ssid);
 
             uint8_t count = 0;
             WiFi.begin(ssid.c_str(), password.c_str());
@@ -462,8 +337,7 @@ int wifiConnect()
                 {
                     Serial.printf("\r\n-- wifi connect fail! --\r\n");
                     // 在屏幕上显示连接失败信息
-                    u8g2.setCursor(u8g2.getCursorX() + 6, u8g2.getCursorY());
-                    u8g2.print("Failed!");
+                    screen.screen_zh_println(TFT_WHITE,"Failed!");
                     break;
                 }
 
@@ -481,24 +355,18 @@ int wifiConnect()
                 // 输出当前空闲堆内存大小
                 Serial.println("Free Heap: " + String(ESP.getFreeHeap()));
                 // 在屏幕上显示连接成功信息
-                u8g2.setCursor(u8g2.getCursorX() + 6, u8g2.getCursorY());
-                u8g2.print("Connected!");
+                screen.screen_zh_println(TFT_WHITE,"Connected!");
                 preferences.end();
                 return 1;
             }
         }
     }
     // 清空屏幕
-    tft.fillScreen(TFT_BLACK);
+    screen.fillScreen(TFT_BLACK);
     // 在屏幕上输出提示信息
-    u8g2.setCursor(0, 11);
-    u8g2.print("网络连接失败！请检查");
-    u8g2.setCursor(0, u8g2.getCursorY() + 12);
-    u8g2.print("网络设备，确认可用后");
-    u8g2.setCursor(0, u8g2.getCursorY() + 12);
-    u8g2.print("重启设备以建立连接！");
-    displayWrappedText("或者连接热点ESP32-Setup密码为12345678，然后在浏览器中打开http://192.168.4.1添加新的网络！", 0, u8g2.getCursorY() + 12,
-                       width);
+    screen.screen_zh_println(TFT_WHITE,"网络连接失败！请检查");
+    screen.screen_zh_println(TFT_WHITE,"网络设备，确认可用后重启设备以建立连接！");
+    screen.screen_zh_println(TFT_WHITE,"或者连接热点ESP32-Setup密码为12345678，然后在浏览器中打开http://192.168.4.1添加新的网络！");
     preferences.end();
     return 0;
 }

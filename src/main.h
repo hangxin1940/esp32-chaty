@@ -15,8 +15,9 @@
 #include "Audio.h"
 #include <ArduinoJson.h>
 #include <ArduinoWebsockets.h>
-#include "Web_Scr_set.h"
+#include "WebServer.h"
 #include "tiger_1.h"
+#include "TFTScreen.h"
 
 // 定义引脚
 #define key 0 // boot按键引脚
@@ -49,13 +50,13 @@ int awake_flag = 1;
 
 
 String Answer = ""; // 存储llm回答，用于语音合成（较短的回答）
-String text_temp = ""; // 存储超出当前屏幕的文字，在下一屏幕显示
 int loopcount = 0; // 对话次数计数器
 int conflag = 0; // 用于连续对话
 int await_flag = 1; // 待机标识
 int start_con = 0; // 标识是否开启了一轮对话
 int image_show = 0;
 
+TFTScreen screen;
 
 // 创建音频对象
 Mic mic;
@@ -65,7 +66,6 @@ Audio audio(false, 3, I2S_NUM_1);
 // 指定使用哪个I2S端口。ESP32有两个I2S端口，I2S_NUM_0和I2S_NUM_1。可以根据需要选择不同的I2S端口。
 
 // 函数声明
-void displayWrappedText(const String text, int x, int y, int maxWidth);
 float calculateRMS(uint8_t* buffer, int bufferSize);
 int wifiConnect();
 void chat_completions(String content);
@@ -75,4 +75,4 @@ int audioTranscriptions(int frame_index, String audio_id, int is_finished, uint8
                         String& output);
 String randomString(int len);
 void startRecording();
-void tft_print_chat(String role, String content);
+void VolumeSet(String numberStr);
