@@ -123,10 +123,8 @@ void VolumeSet(String numberStr)
 void startRecording()
 {
     // 初始化变量
-    int silence = 0;
     int frame_index = 0;
-    int voicebegin = 0;
-    int voice = 0;
+
     String audio_id = randomString(12);
 
     // 创建一个静态JSON文档对象，2000一般够了，不够可以再加（最多不能超过4096），但是可能会发生内存溢出
@@ -154,7 +152,7 @@ void startRecording()
 
     Serial.println("开始录音");
     // 无限循环，用于录制和发送音频数据
-    while (1)
+    while (true)
     {
         // 待机状态（语音唤醒状态）也可通过boot键启动
         if (digitalRead(key) == 0 && await_flag == 1)
@@ -162,68 +160,16 @@ void startRecording()
             start_con = 1; // 对话开始标识
             await_flag = 0;
             frame_index = 0;
+            delay(40);
             break;
         }
 
-
-        // 录制音频数据并获取rms
-        // TODO 缓存后再发送
-        float rms = mic.RecordVoice();
-
-        bool valid_rms = rms > noise_low && rms < 20000;
-
-        if (valid_rms)
+        VoiceCheck checkData = mic.RecordVoice();
+        if (checkData.has_voice)
         {
-            voice++;
-            silence--;
-            if (silence < 0)
-            {
-                silence = 0;
-            }
-            if (voice > voice_max)
-            {
-                voice = 5;
-                if (silence == 0)
-                {
-                    voicebegin = 1;
-                }
-            }
-        }
-        else
-        {
-            voice--;
-            if (voice < 0)
-            {
-                voice = 0;
-            }
-            if (voice == 0 && silence == 0)
-            {
-                voicebegin = 0;
-            }
-
-            if (voicebegin == 1)
-            {
-                silence++;
-                if (silence > silence_max)
-                {
-                    silence = silence_max;
-                    voice = 0;
-                }
-            }
-        }
-
-        if (voicebegin == 1)
-        {
-            int is_finish = 0;
-            if (silence == silence_max)
-            {
-                is_finish = 1;
-                voicebegin = 0;
-                silence = 0;
-            }
-
             String stt_text;
-            int result = ai.audioTranscriptions(frame_index, audio_id, is_finish, (byte*)mic.get_wav_data(), 1280,
+            int result = ai.audioTranscriptions(frame_index, audio_id, checkData.is_finish, (byte*)mic.get_wav_data(),
+                                                1280,
                                                 stt_text);
             if (result == 0)
             {
@@ -245,24 +191,13 @@ void startRecording()
                             conflag = 1;
                         }
                     }
-
+                    delay(40);
                     break;
                 }
             }
-
-            printf("rms: %f send frame_index: %d finish: %d\n", rms, frame_index, is_finish);
             frame_index++;
-            if (is_finish == 1)
-            {
-                frame_index = 0;
-            }
+            delay(40);
         }
-        else
-        {
-            // printf("rms: %f voice:%d silence: %d\n", rms,voice, silence);
-        }
-
-        delay(40);
     }
 }
 

@@ -38,10 +38,7 @@ String base_url = "http://192.168.1.16:12345";
 // 定义一些全局变量
 bool ledstatus = true; // 控制led闪烁
 int http_timeout = 60000;
-int noise_low = 200; // 噪声门限值
 int volume = 80; // 初始音量大小（最小0，最大100）
-int silence_max = 8; //最大静音周期
-int voice_max = 2; //录音周期
 
 
 int cursorY = 0;

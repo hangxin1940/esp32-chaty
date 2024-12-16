@@ -18,9 +18,9 @@ Mic::~Mic()
 
 void Mic::init()
 {
-  wavData = new char *[1];
-  for (int i = 0; i < 1; ++i)
-    wavData[i] = new char[buffSize];
+    wavData = new char*[1];
+    for (int i = 0; i < 1; ++i)
+        wavData[i] = new char[buffSize];
 }
 
 void Mic::clear()
@@ -28,8 +28,9 @@ void Mic::clear()
     i2s->clear();
 }
 
-float Mic::RecordVoice()
+VoiceCheck Mic::RecordVoice()
 {
+    VoiceCheck checkData = VoiceCheck{0, false};
     i2s->Read(i2sBuffer, i2sBufferSize);
     for (int i = 0; i < i2sBufferSize / 8; ++i)
     {
@@ -38,7 +39,63 @@ float Mic::RecordVoice()
     }
     float rms = calculateRMS();
 
-    return rms;
+    if (rms > noise_low && rms < 20000)
+    {
+        voice++;
+        silence--;
+        if (silence < 0)
+        {
+            silence = 0;
+        }
+        if (voice >= voice_max)
+        {
+            voice = 5;
+            if (silence == 0)
+            {
+                voicebegin = 1;
+            }
+        }
+    }
+    else
+    {
+        voice--;
+        if (voice < 0)
+        {
+            voice = 0;
+        }
+        if (voice == 0 && silence == 0)
+        {
+            voicebegin = 0;
+        }
+
+        if (voicebegin == 1)
+        {
+            silence++;
+            if (silence > silence_max)
+            {
+                silence = silence_max;
+                voice = 0;
+            }
+        }
+    }
+
+    if (voicebegin == 1)
+    {
+        int is_finish = 0;
+        if (silence == silence_max)
+        {
+            is_finish = 1;
+            voicebegin = 0;
+            silence = 0;
+        }
+
+        checkData.has_voice = true;
+        checkData.is_finish = is_finish;
+
+        printf("rms: %f finish: %d\n", rms, is_finish);
+    }
+
+    return checkData;
 }
 
 char* Mic::get_wav_data()
