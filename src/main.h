@@ -33,7 +33,7 @@
 String system_role = "";
 
 const char* openai_apiKey = "";
-String base_url = "http://192.168.1.16:12345";
+String base_url = "http://192.168.1.10:12345";
 
 // 定义一些全局变量
 bool ledstatus = true; // 控制led闪烁

@@ -122,11 +122,6 @@ void VolumeSet(String numberStr)
 
 void startRecording()
 {
-    // 初始化变量
-    int frame_index = 0;
-
-    String audio_id = randomString(12);
-
     // 创建一个静态JSON文档对象，2000一般够了，不够可以再加（最多不能超过4096），但是可能会发生内存溢出
     StaticJsonDocument<4096> doc;
 
@@ -148,7 +143,18 @@ void startRecording()
     {
         screen.screen_zh_println(TFT_WHITE, "请说话！");
     }
+    // 初始化变量
+    int frame_index = 0;
     conflag = 0;
+
+    String audio_id = randomString(12);
+    if (!ai.audioTranscriptionsWs_connect(audio_id))
+    {
+        conflag = 1;
+        Serial.println("audioTranscriptionsWs_connect failed");
+        delay(1000);
+        return;
+    }
 
     Serial.println("开始录音");
     // 无限循环，用于录制和发送音频数据
@@ -159,7 +165,8 @@ void startRecording()
         {
             start_con = 1; // 对话开始标识
             await_flag = 0;
-            frame_index = 0;
+            mic.clear();
+            ai.audioTranscriptionsWs_close();
             delay(40);
             break;
         }
@@ -167,38 +174,45 @@ void startRecording()
         VoiceCheck checkData = mic.RecordVoice();
         if (checkData.has_voice)
         {
-            String stt_text;
-            int result = ai.audioTranscriptions(frame_index, audio_id, checkData.is_finish, (byte*)mic.get_wav_data(),
-                                                1280,
-                                                stt_text);
-            if (result == 0)
+            int sendok = ai.audioTranscriptionsWs_sendframe(frame_index, checkData.is_finish, (uint8_t*)mic.get_wav_data(), 1280);
+            if (sendok == 0)
             {
-                if (stt_text != nullptr && strcmp(stt_text.c_str(), "") != 0)
-                {
-                    screen.fillScreen(TFT_BLACK);
-                    // tft.fillScreen(TFT_BLACK);
-                    // tft.setCursor(0, 0);
-                    // // 发送给大模型
-                    screen.screen_zh_println(TFT_WHITE, stt_text);
-                    String answer;
-                    int ccresult = ai.chat_completions(stt_text, answer);
-                    if (ccresult == 0)
-                    {
-                        if (answer != nullptr && strcmp(answer.c_str(), "") != 0)
-                        {
-                            screen.screen_zh_println(TFT_GREENYELLOW, answer);
-                            ai.audio_speech(answer);
-                            conflag = 1;
-                        }
-                    }
-                    delay(40);
-                    break;
-                }
+                mic.clear();
+                ai.audioTranscriptionsWs_close();
+                conflag = 1;
+                Serial.println("audioTranscriptionsWs_sendframe failed");
+                delay(1000);
+                return;
             }
+            // if (result == 0)
+            // {
+            //     if (stt_text != nullptr && strcmp(stt_text.c_str(), "") != 0)
+            //     {
+            //         screen.fillScreen(TFT_BLACK);
+            //         // tft.fillScreen(TFT_BLACK);
+            //         // tft.setCursor(0, 0);
+            //         // // 发送给大模型
+            //         screen.screen_zh_println(TFT_WHITE, stt_text);
+            //         String answer;
+            //         int ccresult = ai.chat_completions(stt_text, answer);
+            //         if (ccresult == 0)
+            //         {
+            //             if (answer != nullptr && strcmp(answer.c_str(), "") != 0)
+            //             {
+            //                 screen.screen_zh_println(TFT_GREENYELLOW, answer);
+            //                 ai.audio_speech(answer);
+            //                 conflag = 1;
+            //             }
+            //         }
+            //         delay(40);
+            //         break;
+            //     }
+            // }
             frame_index++;
-            delay(40);
         }
     }
+    mic.clear();
+    ai.audioTranscriptionsWs_close();
 }
 
 

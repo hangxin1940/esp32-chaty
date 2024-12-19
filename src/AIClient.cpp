@@ -263,6 +263,68 @@ int AIClient::audioTranscriptions(int frame_index, String audio_id, int is_finis
     }
 }
 
+bool AIClient::audioTranscriptionsWs_connect(String audio_id)
+{
+	webSocketClient.onMessage([&](websockets::WebsocketsMessage message) {
+        Serial.printf("Got message: %s\n", message.data().c_str());
+    });
+
+	webSocketClient.onEvent([&](websockets::WebsocketsEvent event, websockets::WSInterfaceString data) {
+        if (event == websockets::WebsocketsEvent::ConnectionOpened)
+        {
+            Serial.println("WebSocket Connected");
+            wsconnected = true;
+        }
+        else if (event == websockets::WebsocketsEvent::ConnectionClosed)
+        {
+            Serial.println("WebSocket Disconnected");
+            wsconnected = false;
+        }
+    });
+
+    String url = base_url + "/v1/audio/transcriptions/ws?"
+            + "file=" + urlencode("audio.wav", false)
+            + "&audio_id=" + urlencode(audio_id.c_str(), false)
+            + "&audio_mime=" + urlencode("audio/L16;rate=8000", false);
+    Serial.printf("connect to %s\n",url.c_str());
+    return webSocketClient.connect(url);
+}
+
+void AIClient::audioTranscriptionsWs_poll()
+{
+  if (wsconnected)
+  	webSocketClient.poll();
+}
+
+void AIClient::audioTranscriptionsWs_close()
+{
+  if (wsconnected)
+  	webSocketClient.close();
+}
+
+int AIClient::audioTranscriptionsWs_sendframe(int frame_index, int is_finished, uint8_t* audio_payload, size_t size)
+{
+
+    if (wsconnected)
+    {
+        DynamicJsonDocument data(4096);
+
+        data["is_finish"] = is_finished;
+        data["frame_index"] = frame_index;
+        data["data"] = base64::encode((byte *)audio_payload, size);
+
+        // 将JSON文档序列化为字符串
+        String jsonString;
+
+        serializeJson(data, jsonString);
+        data.clear();
+        if (is_finished == 1)
+          frame_index = 0;
+        return webSocketClient.send(jsonString);
+    }
+    return 0;
+}
+
 bool AIClient::audio_speech(String content)
 {
     if (content != "")
@@ -274,3 +336,44 @@ bool AIClient::audio_speech(String content)
     return true;
 }
 
+
+
+char* AIClient::x_ps_malloc(uint16_t len)
+{
+    char* ps_str = NULL;
+    if (psramFound()) { ps_str = (char*)ps_malloc(len); }
+    else { ps_str = (char*)malloc(len); }
+    return ps_str;
+}
+
+char* AIClient::urlencode(const char* str, bool spacesOnly)
+{
+    // Reserve memory for the result (3x the length of the input string, worst-case)
+    char* encoded = x_ps_malloc(strlen(str) * 3 + 1);
+    char* p_encoded = encoded;
+
+    if (encoded == NULL)
+    {
+        return NULL; // Memory allocation failed
+    }
+
+    while (*str)
+    {
+        // Adopt alphanumeric characters and secure characters directly
+        if (isalnum((unsigned char)*str))
+        {
+            *p_encoded++ = *str;
+        }
+        else if (spacesOnly && *str != 0x20)
+        {
+            *p_encoded++ = *str;
+        }
+        else
+        {
+            p_encoded += sprintf(p_encoded, "%%%02X", (unsigned char)*str);
+        }
+        str++;
+    }
+    *p_encoded = '\0'; // Null-terminieren
+    return encoded;
+}

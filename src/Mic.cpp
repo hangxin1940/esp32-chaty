@@ -26,6 +26,10 @@ void Mic::init()
 void Mic::clear()
 {
     i2s->clear();
+    i2s = nullptr;
+    i2s = new I2S();
+    wavData = nullptr;
+    init();
 }
 
 VoiceCheck Mic::RecordVoice()

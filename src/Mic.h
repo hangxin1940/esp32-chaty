@@ -24,7 +24,7 @@ class Mic
     int voice = 0;
     int noise_low = 200; // 噪声门限值
     int silence_max = 8; //最大静音周期
-    int voice_max = 5; //录音周期
+    int voice_max = 2; //录音周期
 
 public:
     static const int wavDataSize = 30000; // 必须是dividedWavDataSize的倍数。录音时间约为1.9秒。
