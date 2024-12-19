@@ -31,7 +31,7 @@ public:
                             String& output);
     bool audio_speech(String content);
 
-    bool audioTranscriptionsWs_connect(String audio_id);
+    bool audioTranscriptionsWs_connect(String audio_id, void (*onconnect)());
     int audioTranscriptionsWs_sendframe(int frame_index, int is_finished, uint8_t* audio_payload, size_t size);
     void audioTranscriptionsWs_poll();
     void audioTranscriptionsWs_close();

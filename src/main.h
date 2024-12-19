@@ -66,3 +66,4 @@ Audio audio(false, 3, I2S_NUM_1);
 int wifiConnect();
 void startRecording();
 void VolumeSet(String numberStr);
+void onAudioTranscriptionsWsnMessageCallback(const websockets::WebsocketsMessage& message);

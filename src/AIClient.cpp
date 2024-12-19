@@ -263,22 +263,21 @@ int AIClient::audioTranscriptions(int frame_index, String audio_id, int is_finis
     }
 }
 
-bool AIClient::audioTranscriptionsWs_connect(String audio_id)
+bool AIClient::audioTranscriptionsWs_connect(String audio_id,void(* onconnect)())
 {
-	webSocketClient.onMessage([&](websockets::WebsocketsMessage message) {
-        Serial.printf("Got message: %s\n", message.data().c_str());
-    });
-
 	webSocketClient.onEvent([&](websockets::WebsocketsEvent event, websockets::WSInterfaceString data) {
         if (event == websockets::WebsocketsEvent::ConnectionOpened)
         {
             Serial.println("WebSocket Connected");
             wsconnected = true;
+            onconnect();
         }
         else if (event == websockets::WebsocketsEvent::ConnectionClosed)
         {
             Serial.println("WebSocket Disconnected");
             wsconnected = false;
+        } else {
+          Serial.printf("WebSocket event:%d", event);
         }
     });
 
