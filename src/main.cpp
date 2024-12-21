@@ -53,8 +53,6 @@ void setup()
         // 清空屏幕，在屏幕上输出提示信息
         screen.fillScreen(TFT_BLACK);
         screen.screen_zh_println(TFT_WHITE, "网络连接成功！");
-        screen.screen_zh_println();
-        screen.screen_zh_println(TFT_WHITE, "请进行语音唤醒或按boot键开始对话！");
     }
     else
     {
@@ -92,7 +90,7 @@ void loop()
     }
 
     // 连续对话
-    if (!ai.need_speech() && !audio.isRunning() && !chat_processing && image_show == 0)
+    if (!ai.need_speech() && !audio.isRunning() && !chat_processing)
     {
         loopcount++;
         Serial.print("loopcount：");
@@ -124,9 +122,12 @@ void onAudioTranscriptionsWsMessageCallback(websockets::WebsocketsMessage messag
     Serial.printf("use speak STT: %s\n", message.data().c_str());
     if (!message.data().isEmpty())
     {
+        screen.screen_zh_println(TFT_GREENYELLOW, message.data());
+        screen.screen_zh_println(TFT_MAGENTA, "thinking...");
         String answer = "";
         if (ai.chat_completions(message.data(), answer))
         {
+            screen.screen_zh_println(TFT_ORANGE, answer);
             ai.add_speech(answer);
         }
         else
@@ -171,6 +172,7 @@ void onAudioTranscriptionsWsnConnectedCallback()
             }
             if (checkData.is_finish == 1)
             {
+                screen.screen_zh_println(TFT_MAGENTA, "record finish");
                 mic.clear();
                 Serial.println("record finish");
                 delay(40);
@@ -186,11 +188,9 @@ void onAudioTranscriptionsWsnConnectedCallback()
 void startRecording()
 {
     screen.fillScreen(TFT_BLACK);
-    screen.screen_zh_println(TFT_WHITE, "待机中......");
-    screen.screen_zh_println();
-    screen.screen_zh_println(TFT_WHITE, "请进行语音唤醒或按boot键开始对话！");
-    screen.fillScreen(TFT_BLACK);
-    screen.pushImage(0, 0, screen_width, screen_height, image_data_tiger_1);
+    screen.screen_zh_println(TFT_MAGENTA, "recording...");
+    // screen.fillScreen(TFT_BLACK);
+    // screen.pushImage(0, 0, screen_width, screen_height, image_data_tiger_1);
 
     // 创建一个静态JSON文档对象，2000一般够了，不够可以再加（最多不能超过4096），但是可能会发生内存溢出
     StaticJsonDocument<4096> doc;

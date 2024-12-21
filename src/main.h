@@ -41,7 +41,6 @@ int http_timeout = 60000;
 int volume = 80; // 初始音量大小（最小0，最大100）
 int loopcount = 0; // 对话次数计数器
 bool chat_processing = false; // 用于连续对话
-int image_show = 0;
 
 TFTScreen screen;
 AIClient ai;
