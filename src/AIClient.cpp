@@ -6,7 +6,7 @@ AIClient::AIClient()
 
 
 // 问题发送给Chatgpt并接受回答，然后转成语音
-int AIClient::chat_completions(String content, String& output)
+bool AIClient::chat_completions(String content, String& output)
 {
     HTTPClient http;
     http.setTimeout(http_timeout); // 设置请求超时时间
@@ -43,13 +43,13 @@ int AIClient::chat_completions(String content, String& output)
             output = content;
             content = "";
             Serial.printf("\t OUT:\n%s\n", output.c_str());
-            return 0;
+            return true;
         }
         else
         {
             Serial.printf("Error json: %s\n", output.c_str());
             output = "";
-            return 1;
+            return false;
         }
     }
     else
@@ -57,13 +57,13 @@ int AIClient::chat_completions(String content, String& output)
         Serial.printf("Error %i \n", httpResponseCode);
         Serial.println(http.getString());
         http.end();
-        return 1;
+        return false;
     }
 }
 
 
 // 问题发送给Chatgpt并接受回答，然后转成语音
-int AIClient::chat_completions_stream(String content, String& output)
+bool AIClient::chat_completions_stream(String content, String& output)
 {
     HTTPClient http;
     http.setTimeout(http_timeout); // 设置请求超时时间
@@ -112,7 +112,7 @@ int AIClient::chat_completions_stream(String content, String& output)
                     if (jsonResponse["choices"][0]["finish_reason"] == "stop")
                     {
                         stream->stop();
-                        return 0;
+                        return true;
                     }
 
                     const char* content = jsonResponse["choices"][0]["delta"]["content"];
@@ -128,10 +128,10 @@ int AIClient::chat_completions_stream(String content, String& output)
                     if (output != nullptr && strcmp(output.c_str(), "") != 0)
                     {
                         stream->stop();
-                        return 0;
+                        return false;
                     }
                     stream->stop();
-                    return 1;
+                    return false;
 
                 }
             }
@@ -142,7 +142,7 @@ int AIClient::chat_completions_stream(String content, String& output)
         Serial.printf("Error %i \n", httpResponseCode);
         Serial.println(http.getString());
         http.end();
-        return 1;
+        return false;
     }
 }
 
@@ -324,55 +324,87 @@ int AIClient::audioTranscriptionsWs_sendframe(int frame_index, int is_finished, 
     return 0;
 }
 
-bool AIClient::audio_speech(String content)
+void AIClient::add_speech(String content)
 {
-    if (content != "")
+	content.trim();
+    if (content.isEmpty())
     {
-        String url = base_url + "/v1/audio/speech?file=1&input=" + content;
-        Serial.println(url);
-        return audio->connecttohost(url.c_str());
-    }
-    return true;
-}
-
-
-
-char* AIClient::x_ps_malloc(uint16_t len)
-{
-    char* ps_str = NULL;
-    if (psramFound()) { ps_str = (char*)ps_malloc(len); }
-    else { ps_str = (char*)malloc(len); }
-    return ps_str;
-}
-
-char* AIClient::urlencode(const char* str, bool spacesOnly)
-{
-    // Reserve memory for the result (3x the length of the input string, worst-case)
-    char* encoded = x_ps_malloc(strlen(str) * 3 + 1);
-    char* p_encoded = encoded;
-
-    if (encoded == NULL)
-    {
-        return NULL; // Memory allocation failed
+        return;
     }
 
-    while (*str)
+    int r = 0, t = 0;
+
+    for (int i = 0; i < content.length(); i++)
     {
-        // Adopt alphanumeric characters and secure characters directly
-        if (isalnum((unsigned char)*str))
+        if (content.charAt(i) == '\n')
         {
-            *p_encoded++ = *str;
+            String line = content.substring(r, i);
+            r = i + 1;
+            t++;
+            if (!line.isEmpty())
+            {
+                tts_lines.push_back(line);
+            }
         }
-        else if (spacesOnly && *str != 0x20)
+    }
+    if (r < content.length())
+    {
+        String line = content.substring(r);
+        if (!line.isEmpty())
         {
-            *p_encoded++ = *str;
+            tts_lines.push_back(line);
+        }
+    }
+}
+
+bool AIClient::need_speech()
+{
+  return tts_lines.size() > 0;
+}
+
+void AIClient::clear_speech()
+{
+    tts_lines.clear();
+}
+
+void AIClient::play_speech()
+{
+	if (tts_lines.size() > 0)
+    {
+        String url = base_url + "/v1/audio/speech?file=1&input=" + urlencode(tts_lines[0].c_str(), false);
+
+
+        String url_without_prefix = "";
+        int port = 80;
+        if (url.startsWith("http://"))
+        {
+            url_without_prefix = url.substring(7);
+        }
+        else if (url.startsWith("https://"))
+        {
+            url_without_prefix = url.substring(8);
+            port = 443;
         }
         else
         {
-            p_encoded += sprintf(p_encoded, "%%%02X", (unsigned char)*str);
+            url_without_prefix = url;
         }
-        str++;
+        int index_splash = url_without_prefix.indexOf("/");
+        int index_colon = url_without_prefix.indexOf(":");
+        String host = "";
+        String path = "";
+        if (index_colon < index_splash)
+        {
+            host = url_without_prefix.substring(0, index_colon);
+            path = url_without_prefix.substring(index_splash);
+            port = url_without_prefix.substring(index_colon + 1, index_splash).toInt();
+        } else
+        {
+            host = url_without_prefix.substring(0, index_splash);
+            path = url_without_prefix.substring(index_splash);
+        }
+        audio->connecttospeech(host.c_str(), port, path.c_str());
+        tts_lines.erase(tts_lines.begin());
+        Serial.printf("tts_lines size: %d\n", tts_lines.size());
     }
-    *p_encoded = '\0'; // Null-terminieren
-    return encoded;
 }

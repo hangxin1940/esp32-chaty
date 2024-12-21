@@ -55,7 +55,6 @@ void setup()
         screen.screen_zh_println(TFT_WHITE, "网络连接成功！");
         screen.screen_zh_println();
         screen.screen_zh_println(TFT_WHITE, "请进行语音唤醒或按boot键开始对话！");
-        awake_flag = 0;
     }
     else
     {
@@ -68,33 +67,32 @@ void setup()
 void loop()
 {
     ai.audioTranscriptionsWs_poll();
-    // 音频处理循环
-    audio.loop();
 
     // 如果音频正在播放
     if (audio.isRunning())
         digitalWrite(led, HIGH); // 点亮板载LED指示灯
     else
-        digitalWrite(led, LOW); // 熄灭板载LED指示灯
-
-    // 唤醒词识别
-    if ((!audio.isRunning() && awake_flag == 0) && await_flag == 1)
     {
-        awake_flag = 1;
-        startRecording();
+        digitalWrite(led, LOW); // 熄灭板载LED指示灯
+        ai.play_speech();
     }
+
+    // 音频处理循环
+    audio.loop();
 
     // 检测boot按键是否按下
     if (digitalRead(key) == 0)
     {
-        conflag = 0;
+        ai.clear_speech();
+        chat_processing = false;
         loopcount++;
         Serial.print("loopcount：");
         Serial.println(loopcount);
         startRecording();
     }
+
     // 连续对话
-    if (!audio.isRunning() && conflag == 1 && image_show == 0)
+    if (!ai.need_speech() && !audio.isRunning() && !chat_processing && image_show == 0)
     {
         loopcount++;
         Serial.print("loopcount：");
@@ -117,13 +115,27 @@ void VolumeSet(String numberStr)
     // tft.print("volume:");
     // tft.print(volume);
 
-    conflag = 1;
+    chat_processing = false;
 }
 
 
 void onAudioTranscriptionsWsMessageCallback(websockets::WebsocketsMessage message)
 {
-    printf("ws callback: %s\n", message.data().c_str());
+    Serial.printf("use speak STT: %s\n", message.data().c_str());
+    if (!message.data().isEmpty())
+    {
+        String answer = "";
+        if (ai.chat_completions(message.data(), answer))
+        {
+            ai.add_speech(answer);
+        }
+        else
+        {
+            Serial.println("chat_completions failed");
+        }
+    }
+
+    chat_processing = false;
 }
 
 
@@ -135,10 +147,8 @@ void onAudioTranscriptionsWsnConnectedCallback()
     while (true)
     {
         // 待机状态（语音唤醒状态）也可通过boot键启动
-        if (digitalRead(key) == 0 && await_flag == 1)
+        if (digitalRead(key) == 0)
         {
-            start_con = 1; // 对话开始标识
-            await_flag = 0;
             mic.clear();
             ai.audioTranscriptionsWs_close();
             delay(40);
@@ -154,7 +164,7 @@ void onAudioTranscriptionsWsnConnectedCallback()
             {
                 mic.clear();
                 ai.audioTranscriptionsWs_close();
-                conflag = 1;
+                chat_processing = false;
                 Serial.println("audioTranscriptionsWs_sendframe failed");
                 delay(1000);
                 return;
@@ -175,35 +185,24 @@ void onAudioTranscriptionsWsnConnectedCallback()
 
 void startRecording()
 {
+    screen.fillScreen(TFT_BLACK);
+    screen.screen_zh_println(TFT_WHITE, "待机中......");
+    screen.screen_zh_println();
+    screen.screen_zh_println(TFT_WHITE, "请进行语音唤醒或按boot键开始对话！");
+    screen.fillScreen(TFT_BLACK);
+    screen.pushImage(0, 0, screen_width, screen_height, image_data_tiger_1);
+
     // 创建一个静态JSON文档对象，2000一般够了，不够可以再加（最多不能超过4096），但是可能会发生内存溢出
     StaticJsonDocument<4096> doc;
 
-    if (await_flag == 1)
-    {
-        screen.fillScreen(TFT_BLACK);
-        screen.screen_zh_println(TFT_WHITE, "待机中......");
-        screen.screen_zh_println();
-        screen.screen_zh_println(TFT_WHITE, "请进行语音唤醒或按boot键开始对话！");
-        screen.fillScreen(TFT_BLACK);
-        screen.pushImage(0, 0, screen_width, screen_height, image_data_tiger_1);
-    }
-    else if (conflag == 1)
-    {
-        screen.fillScreen(TFT_BLACK);
-        screen.screen_zh_println(TFT_WHITE, "连续对话中，请说话！");
-    }
-    else
-    {
-        screen.screen_zh_println(TFT_WHITE, "请说话！");
-    }
     // 初始化变量
-    conflag = 0;
+    chat_processing = true;
 
     String audio_id = randomString(12);
     ai.webSocketClient.onMessage(onAudioTranscriptionsWsMessageCallback);
     if (!ai.audioTranscriptionsWs_connect(audio_id, onAudioTranscriptionsWsnConnectedCallback))
     {
-        conflag = 1;
+        chat_processing = false;
         Serial.println("audioTranscriptionsWs_connect failed");
     }
     else
